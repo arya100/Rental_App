@@ -2,10 +2,19 @@ import React, {useState} from 'react';
 import {View, StyleSheet} from 'react-native';
 import {TextInput, Button, Text} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { useNavigation } from '@react-navigation/native';
 
-const LoginScreen = ({navigation}: any) => {
+const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const navigation = useNavigation();
+
+  const handleLogin = () => {
+    // Perform login logic here (e.g., API call)
+    // After successful login, navigate to Profile screen
+    navigation.navigate('Profile');
+  };
 
   return (
     <View style={styles.container}>
@@ -25,11 +34,15 @@ const LoginScreen = ({navigation}: any) => {
         style={styles.input}
         left={<TextInput.Icon name={() => <Icon name="lock" size={20} />} />}
       />
-      <Button
-        mode="contained"
-        onPress={() => navigation.navigate('Home')}
-        style={styles.button}>
+      <Button mode="contained" style={styles.button} onPress={handleLogin}>
         Login
+      </Button>
+      <Button
+        mode="text"
+        onPress={() => navigation.navigate('SignUp')}
+        style={styles.signUpButton}
+      >
+        Don't have an account? Sign Up
       </Button>
     </View>
   );
@@ -54,6 +67,9 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 20,
   },
+  signUpButton: {
+    marginTop: 20,
+  }
 });
 
 export default LoginScreen;

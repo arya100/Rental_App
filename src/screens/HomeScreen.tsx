@@ -1,23 +1,24 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Button, Text } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 
-const HomeScreen = ({ navigation }: any) => {
+const HomeScreen = () => {
+  const navigation = useNavigation();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Select Your Role</Text>
-
+      <Text style={styles.title}>Welcome to the Rental App</Text>
       <Button
         mode="contained"
-        onPress={() => navigation.navigate('CreateDriver')}
+        onPress={() => navigation.navigate('Login')}
         style={styles.button}
       >
         Driver
       </Button>
-      
       <Button
-        mode="outlined"
-        onPress={() => navigation.navigate('RideTypeSelection')}
+        mode="contained"
+        onPress={() => navigation.navigate('CarList')}
         style={styles.button}
       >
         User
@@ -30,17 +31,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    backgroundColor: '#fff',
+    alignItems: 'center',
+    padding: 20,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    textAlign: 'center',
     marginBottom: 30,
   },
   button: {
-    marginBottom: 15,
+    marginBottom: 20,
+    width: '100%',
   },
 });
 
