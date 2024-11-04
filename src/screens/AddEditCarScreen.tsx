@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image, ScrollView, Alert } from 'react-native';
-import { TextInput, Button, Text, RadioButton } from 'react-native-paper';
+import React from 'react';
+import { View, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import { TextInput, Button, Text, RadioButton, IconButton } from 'react-native-paper';
+import { Formik, FormikHelpers } from 'formik';
+import * as Yup from 'yup';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../App';
@@ -15,174 +17,175 @@ interface CarDetails {
   driverName?: string;
   driverNumber?: string;
 }
+
 type AddEditCarScreenRouteProp = RouteProp<RootStackParamList, 'AddEditCar'>;
 
-const AddEditCarScreen = () => {
-    const navigation = useNavigation();
-    const route = useRoute<AddEditCarScreenRouteProp>();
+const validationSchema = Yup.object().shape({
+  brand: Yup.string().required('Car brand is required'),
+  model: Yup.string().required('Car model is required'),
+  year: Yup.string().required('Car year is required'),
+  licensePlate: Yup.string().required('License plate is required'),
+  photos: Yup.array().max(6, 'You can upload a maximum of 6 photos per car'),
+  availability: Yup.string().required(),
+  driverName: Yup.string().when('availability', {
+    is: (value: string) => value === 'With Driver' || value === 'Both',
+    then: Yup.string().required('Driver name is required'),
+  }),
+  driverNumber: Yup.string().when('availability', {
+    is: (value: string) => value === 'With Driver' || value === 'Both',
+    then: Yup.string().required('Driver number is required'),
+  }),
+});
 
-    const isEditMode = route.params?.isEditMode || false;
+const AddEditCarScreen = () => {
+  const navigation = useNavigation();
+  const route = useRoute<AddEditCarScreenRouteProp>();
+
+  const isEditMode = route.params?.isEditMode || false;
   const existingCarData = route.params?.carData;
 
-  const [cars, setCars] = useState<CarDetails[]>([
-    { brand: '', model: '', year: '', licensePlate: '', photos: [], availability: 'Car Only' }
-  ]);
-
-  const handleCarPhotoUpload = (index: number) => {
-    if (cars[index].photos.length >= 6) {
-      alert('You can upload a maximum of 6 photos per car.');
+  const handleCarPhotoUpload = async (
+    setFieldValue: FormikHelpers<CarDetails>['setFieldValue'],
+    photos: string[]
+  ) => {
+    if (photos.length >= 6) {
+      Alert.alert('Photo Limit', 'You can upload a maximum of 6 photos per car.');
       return;
     }
 
-    launchImageLibrary({ mediaType: 'photo', selectionLimit: 1 }, (response) => {
-      if (response.assets && response.assets.length > 0) {
-        const newPhotoUri = response.assets[0].uri;
-        if (newPhotoUri) {
-          setCars((prevCars) =>
-            prevCars.map((car, carIndex) =>
-              carIndex === index ? { ...car, photos: [...car.photos, newPhotoUri] } : car
-            )
-          );
-        }
-      }
-    });
-  };
-
-  const handleAddCar = () => {
-    setCars([...cars, { brand: '', model: '', year: '', licensePlate: '', photos: [], availability: 'Car Only' }]);
-  };
-
-  const handleCarChange = (index: number, field: keyof CarDetails, value: string) => {
-    setCars((prevCars) =>
-      prevCars.map((car, carIndex) =>
-        carIndex === index ? { ...car, [field]: value } : car
-      )
-    );
-  };
-
-  const handleAvailabilityChange = (index: number, value: string) => {
-    setCars((prevCars) =>
-      prevCars.map((car, carIndex) =>
-        carIndex === index ? { ...car, availability: value, driverName: undefined, driverNumber: undefined } : car
-      )
-    );
-  };
-
-
-  useEffect(() => {
-    if (isEditMode && existingCarData) {
-      setCars([{ ...existingCarData }]);
+    const result = await launchImageLibrary({ mediaType: 'photo', selectionLimit: 1 });
+    if (result.assets && result.assets.length > 0) {
+      const newPhotoUri = result.assets[0].uri;
+      setFieldValue('photos', [...photos, newPhotoUri]);
     }
-  }, [isEditMode, existingCarData]);
+  };
 
-  const handleSubmit = () => {
-    const carData = cars[0]; // In this example, assuming a single car is being added or edited.
-    
+  const initialValues = existingCarData || {
+    brand: '',
+    model: '',
+    year: '',
+    licensePlate: '',
+    photos: [],
+    availability: 'Car Only',
+  };
+
+  const handleSubmit = (values: CarDetails) => {
     navigation.navigate('Profile', {
-      carData, // Pass the new or updated car data back to ProfileScreen
+      carData: values,
       isEditMode,
     });
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Car Details</Text>
+    <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={handleSubmit}>
+      {({ values, errors, handleChange, handleBlur, handleSubmit, setFieldValue }) => (
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>Car Details</Text>
 
-      {/* Car Details */}
-      {cars.map((car, index) => (
-        <View key={index} style={styles.carContainer}>
-          <Text style={styles.carTitle}>Car {index + 1}</Text>
+          <View style={styles.carContainer}>
+            <View style={styles.carHeader}>
+              <Text style={styles.carTitle}>Car Details</Text>
+            </View>
 
-          <TextInput
-            label="Car Brand"
-            value={car.brand}
-            onChangeText={(value) => handleCarChange(index, 'brand', value)}
-            style={styles.input}
-          />
-          <TextInput
-            label="Car Model"
-            value={car.model}
-            onChangeText={(value) => handleCarChange(index, 'model', value)}
-            style={styles.input}
-          />
-          <TextInput
-            label="Car Year"
-            value={car.year}
-            onChangeText={(value) => handleCarChange(index, 'year', value)}
-            style={styles.input}
-            keyboardType="numeric"
-          />
-          <TextInput
-            label="License Plate"
-            value={car.licensePlate}
-            onChangeText={(value) => handleCarChange(index, 'licensePlate', value)}
-            style={styles.input}
-          />
+            <TextInput
+              label="Car Brand"
+              value={values.brand}
+              onChangeText={handleChange('brand')}
+              onBlur={handleBlur('brand')}
+              style={styles.input}
+              error={!!errors.brand}
+            />
+            <TextInput
+              label="Car Model"
+              value={values.model}
+              onChangeText={handleChange('model')}
+              onBlur={handleBlur('model')}
+              style={styles.input}
+              error={!!errors.model}
+            />
+            <TextInput
+              label="Car Year"
+              value={values.year}
+              onChangeText={handleChange('year')}
+              onBlur={handleBlur('year')}
+              style={styles.input}
+              keyboardType="numeric"
+              error={!!errors.year}
+            />
+            <TextInput
+              label="License Plate"
+              value={values.licensePlate}
+              onChangeText={handleChange('licensePlate')}
+              onBlur={handleBlur('licensePlate')}
+              style={styles.input}
+              error={!!errors.licensePlate}
+            />
 
-          {/* Car Photos */}
-          <Button
-            mode="contained"
-            onPress={() => handleCarPhotoUpload(index)}
-            style={styles.button}
-          >
-            Upload Car Photos (Max 6)
-          </Button>
-          <View style={styles.photosContainer}>
-            {car?.photos.map((uri, photoIndex) => (
-              <Image key={photoIndex} source={{ uri }} style={styles.photo} />
-            ))}
+            {/* Car Photos */}
+            <Button
+              mode="contained"
+              onPress={() => handleCarPhotoUpload(setFieldValue, values.photos)}
+              style={styles.button}
+            >
+              Upload Car Photos (Max 6)
+            </Button>
+            <View style={styles.photosContainer}>
+              {values.photos?.map((uri, photoIndex) => (
+                <Image key={photoIndex} source={{ uri }} style={styles.photo} />
+              ))}
+            </View>
+
+            {/* Availability Options */}
+            <Text style={styles.label}>Choose Availability</Text>
+            <RadioButton.Group
+              onValueChange={(value) => setFieldValue('availability', value)}
+              value={values.availability}
+            >
+              <View style={styles.radioButtonRow}>
+                <View style={styles.radioButtonContainer}>
+                  <RadioButton value="Car Only" />
+                  <Text>Car Only</Text>
+                </View>
+                <View style={styles.radioButtonContainer}>
+                  <RadioButton value="With Driver" />
+                  <Text>With Driver</Text>
+                </View>
+                <View style={styles.radioButtonContainer}>
+                  <RadioButton value="Both" />
+                  <Text>Both</Text>
+                </View>
+              </View>
+            </RadioButton.Group>
+
+            {(values.availability === 'With Driver' || values.availability === 'Both') && (
+              <>
+                <TextInput
+                  label="Driver Name"
+                  value={values.driverName || ''}
+                  onChangeText={handleChange('driverName')}
+                  onBlur={handleBlur('driverName')}
+                  style={styles.input}
+                  error={!!errors.driverName}
+                />
+                <TextInput
+                  label="Driver Phone Number"
+                  value={values.driverNumber || ''}
+                  onChangeText={handleChange('driverNumber')}
+                  onBlur={handleBlur('driverNumber')}
+                  style={styles.input}
+                  keyboardType="phone-pad"
+                  error={!!errors.driverNumber}
+                />
+              </>
+            )}
           </View>
 
-          {/* Availability Options */}
-          <Text style={styles.label}>Choose Availability</Text>
-          <RadioButton.Group onValueChange={(value) => handleAvailabilityChange(index, value)} value={car.availability}>
-            <View style={styles.radioButtonRow}>
-              <View style={styles.radioButtonContainer}>
-                <RadioButton value="Car Only" />
-                <Text>Car Only</Text>
-              </View>
-              <View style={styles.radioButtonContainer}>
-                <RadioButton value="With Driver" />
-                <Text>With Driver</Text>
-              </View>
-              <View style={styles.radioButtonContainer}>
-                <RadioButton value="Both" />
-                <Text>Both</Text>
-              </View>
-            </View>
-          </RadioButton.Group>
-
-          {/* Driver Details (shown only if With Driver or Both is selected) */}
-          {(car.availability === 'With Driver' || car.availability === 'Both') && (
-            <>
-              <TextInput
-                label="Driver Name"
-                value={car.driverName || ''}
-                onChangeText={(value) => handleCarChange(index, 'driverName', value)}
-                style={styles.input}
-              />
-              <TextInput
-                label="Driver Phone Number"
-                value={car.driverNumber || ''}
-                onChangeText={(value) => handleCarChange(index, 'driverNumber', value)}
-                style={styles.input}
-                keyboardType="phone-pad"
-              />
-            </>
-          )}
-        </View>
-      ))}
-
-      {/* Add Car Button */}
-      <Button mode="outlined" onPress={handleAddCar} style={styles.addButton}>
-        Add Another Car
-      </Button>
-
-      {/* Submit Button */}
-      <Button mode="contained" onPress={handleSubmit} style={styles.button}>
-        Submit
-      </Button>
-    </ScrollView>
+          <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+            Submit
+          </Button>
+        </ScrollView>
+      )}
+    </Formik>
   );
 };
 
@@ -211,10 +214,14 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     borderRadius: 10,
   },
+  carHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   carTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginLeft: 10,
   },
   photosContainer: {
     flexDirection: 'row',
@@ -226,9 +233,6 @@ const styles = StyleSheet.create({
     height: 100,
     margin: 5,
     borderRadius: 8,
-  },
-  addButton: {
-    marginTop: 10,
   },
   label: {
     marginTop: 20,

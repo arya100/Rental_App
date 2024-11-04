@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Alert } from 'react-native';
-import { Card, Text, Button } from 'react-native-paper';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { RootStackParamList } from '../App';
+import { View, StyleSheet, FlatList, Alert, Image } from 'react-native';
+import { Card, Text, Button, IconButton, Menu } from 'react-native-paper';
+import { useNavigation, StackActions, useRoute, RouteProp } from '@react-navigation/native';
+import { RootStackParamList } from '../../App';
 
 interface Car {
   id: string;
@@ -22,24 +22,44 @@ const ProfileScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<ProfileScreenRouteProp>();
 
+  const [username, setUsername] = useState('John Doe'); // Example username
+  const [avatar, setAvatar] = useState('https://via.placeholder.com/100'); // Example avatar URL
   const [cars, setCars] = useState<Car[]>([
     { id: '1', brand: 'Toyota', model: 'Camry', year: '2021', licensePlate: 'ABC123', photos: [], availability: 'Car Only' },
     { id: '2', brand: 'Honda', model: 'Civic', year: '2019', licensePlate: 'XYZ789', photos: [], availability: 'Car Only' },
   ]);
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  // Toggle Menu
+  const toggleMenu = () => setMenuVisible(!menuVisible);
+
+  // Handle Sign Out
+  const handleSignOut = () => {
+    setMenuVisible(false);
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: () => {
+          // Navigate to login page and reset navigation stack
+          navigation.dispatch(StackActions.replace('Login'));
+        },
+      },
+    ]);
+  };
 
   useEffect(() => {
     if (route.params?.carData) {
       const { carData, isEditMode } = route.params;
 
       if (isEditMode) {
-        // Update the existing car in the list
         setCars((prevCars) =>
           prevCars.map((car) =>
             car.id === carData.id ? { ...car, ...carData } : car
           )
         );
       } else {
-        // Add a new car to the list
         setCars((prevCars) => [...prevCars, { ...carData, id: `${Date.now()}` }]);
       }
     }
@@ -60,10 +80,38 @@ const ProfileScreen = () => {
     ]);
   };
 
+  // Set navigation options for ProfileScreen
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => null, // Remove back button
+      headerRight: () => (
+        <Menu
+          visible={menuVisible}
+          onDismiss={toggleMenu}
+          anchor={
+            <IconButton
+              icon="menu"
+              size={24}
+              onPress={toggleMenu}
+            />
+          }
+        >
+          <Menu.Item onPress={handleSignOut} title="Sign Out" />
+        </Menu>
+      ),
+    });
+  }, [navigation, menuVisible]);
+
   return (
     <View style={styles.container}>
+      {/* Header with Avatar and Username */}
+      <View style={styles.header}>
+        <Image source={{ uri: avatar }} style={styles.avatar} />
+        <Text style={styles.username}>{username}</Text>
+      </View>
+
       <Text style={styles.title}>My Cars</Text>
-      
+
       <FlatList
         data={cars}
         keyExtractor={(item) => item.id}
@@ -96,6 +144,21 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  username: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   title: {
     fontSize: 24,

@@ -5,10 +5,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import LoginScreen from './src/screens/LoginScreen'; // We'll create this file next
 import HomeScreen from './src/screens/HomeScreen';
-import CreateDriverScreen from './src/screens/CreateNewDriverScreen';
-import RideTypeSelectionScreen from './src//screens/RideTypeSelectionScreen';
-import CarListScreen from './src/screens/CarListScreen';
-import CarDetailsScreen from './src/screens/CarDetailScreen';
+// import CarListScreen from './src/screens/CarListScreen';
+// import CarDetailsScreen from './src/screens/CarDetailScreen';
+import CarListScreen from './src/screens/Car/CarListScreen';
+import CarDetailsScreen from './src/screens/Car/CarDetailScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import AddEditCarScreen from './src/screens/AddEditCarScreen';
