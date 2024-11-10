@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {View, StyleSheet} from 'react-native';
 import {TextInput, Button, Text} from 'react-native-paper';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
 
 const LoginScreen = () => {
@@ -19,12 +19,13 @@ const LoginScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
+     
       <TextInput
         label="Email or Phone"
         value={email}
         onChangeText={setEmail}
         style={styles.input}
-        left={<TextInput.Icon name={() => <Icon name="email" size={20} />} />}
+        left={<TextInput.Icon name="email" />} 
       />
       <TextInput
         label="Password"
@@ -32,7 +33,7 @@ const LoginScreen = () => {
         onChangeText={setPassword}
         secureTextEntry
         style={styles.input}
-        left={<TextInput.Icon name={() => <Icon name="lock" size={20} />} />}
+        left={<TextInput.Icon name="lock" />} 
       />
       <Button mode="contained" style={styles.button} onPress={handleLogin}>
         Login

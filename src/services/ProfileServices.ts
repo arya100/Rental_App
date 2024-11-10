@@ -1,49 +1,49 @@
 // src/services/profileService.ts
 
-const BASE_URL = 'https://api.example.com/api';
+import axios from 'axios';
+
+const BASE_URL = 'https://6dd0dafa677b4b27ba91719017a6ffd9.api.mockbin.io/';
+const DRIVER_ID = '123'; // Example driver ID, replace with dynamic if needed
+
+axios.defaults.baseURL = BASE_URL;
+axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 export const getProfile = async (driverId: string) => {
-  const response = await fetch(`${BASE_URL}/driver/${driverId}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch profile data');
+  try {
+    const response = await axios.get(BASE_URL);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching profile data:', error);
+    throw error;
   }
-  return response.json();
 };
 
 export const deleteCar = async (driverId: string, carId: string) => {
-  const response = await fetch(`${BASE_URL}/driver/${driverId}/car/${carId}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to delete car');
+  try {
+    const response = await axios.delete(`/driver/${driverId}/car/${carId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting car:', error);
+    throw error;
   }
-  return response.json();
 };
 
 export const addCar = async (driverId: string, carData: any) => {
-  const response = await fetch(`${BASE_URL}/driver/${driverId}/car`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(carData),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add car');
+  try {
+    const response = await axios.post(`/driver/${driverId}/car`, carData);
+    return response.data;
+  } catch (error) {
+    console.error('Error adding car:', error);
+    throw error;
   }
-  return response.json();
 };
 
 export const editCar = async (driverId: string, carId: string, carData: any) => {
-  const response = await fetch(`${BASE_URL}/driver/${driverId}/car/${carId}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(carData),
-  });
-  if (!response.ok) {
-    throw new Error('Failed to update car');
+  try {
+    const response = await axios.put(`/driver/${driverId}/car/${carId}`, carData);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating car:', error);
+    throw error;
   }
-  return response.json();
 };

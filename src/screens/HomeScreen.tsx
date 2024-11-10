@@ -8,20 +8,20 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to the Rental App</Text>
+      <Text style={styles.title}>GoCarGo</Text>
       <Button
         mode="contained"
         onPress={() => navigation.navigate('Login')}
         style={styles.button}
       >
-        Driver
+        Own a Car?
       </Button>
       <Button
         mode="contained"
         onPress={() => navigation.navigate('CarList')}
         style={styles.button}
       >
-        User
+        Find Your Ride
       </Button>
     </View>
   );

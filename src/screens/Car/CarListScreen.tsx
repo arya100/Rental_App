@@ -1,57 +1,95 @@
-// src/screens/Car/CarListScreen.tsx
-
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, TextInput, TouchableOpacity } from 'react-native';
-import { Card, Text, IconButton } from 'react-native-paper';
+import React, { useState, useCallback } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  FlatList, 
+  TextInput, 
+  TouchableOpacity, 
+  Modal, 
+  TouchableWithoutFeedback, 
+  Text 
+} from 'react-native';
+import { Card, Button, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import carsData from '../mocks/cars';
-import FilterPopup from '../../components/FilterPopup';
+
+// Custom Checkbox Component with Tick Mark
+const CustomCheckbox = ({ 
+  isChecked, 
+  onPress, 
+  label 
+}: { 
+  isChecked: boolean; 
+  onPress: () => void; 
+  label: string;
+}) => (
+  <TouchableOpacity 
+    style={styles.checkboxContainer} 
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={[styles.checkbox, isChecked && styles.checked]}>
+      {isChecked && (
+        <Text style={styles.checkmarkText}>✓</Text>
+      )}
+    </View>
+    <Text style={styles.checkboxLabel}>{label}</Text>
+  </TouchableOpacity>
+);
 
 const CarListScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedRating, setSelectedRating] = useState('');
-  const [selectedDriveType, setSelectedDriveType] = useState('');
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
+  const [selectedDriveTypes, setSelectedDriveTypes] = useState<string[]>([]);
   const [filteredCars, setFilteredCars] = useState(carsData);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
 
   const navigation = useNavigation();
 
-  // Function to apply filters
-  const applyFilters = () => {
+  const toggleFilter = useCallback((arraySetter: React.Dispatch<React.SetStateAction<string[]>>, value: string) => {
+    arraySetter(prev => 
+      prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]
+    );
+  }, []);
+
+  const applyFilters = useCallback(() => {
     const filteredData = carsData.filter((car) => {
-      const matchesType = selectedType ? car.carType === selectedType : true;
-      const matchesRating = selectedRating ? car.rating >= parseFloat(selectedRating) : true;
-      const matchesDriveType = selectedDriveType ? car.driveType === selectedDriveType : true;
+      const matchesType = selectedTypes.length === 0 || selectedTypes.includes(car.carType);
+      const matchesRating = selectedRatings.length === 0 ||
+        selectedRatings.some((rating) => car.rating >= parseFloat(rating));
+      const matchesDriveType = selectedDriveTypes.length === 0 ||
+        selectedDriveTypes.includes(car.driveType);
       const matchesSearch = car.driverName.toLowerCase().includes(searchQuery.toLowerCase());
+
       return matchesType && matchesRating && matchesDriveType && matchesSearch;
     });
+    
     setFilteredCars(filteredData);
-    setIsFilterModalVisible(false); // Close filter modal after applying filters
-  };
+    setIsFilterModalVisible(false);
+  }, [selectedTypes, selectedRatings, selectedDriveTypes, searchQuery]);
 
-  // Function to clear all filters
-  const clearFilters = () => {
-    setSearchQuery('');
-    setSelectedType('');
-    setSelectedRating('');
-    setSelectedDriveType('');
-    setFilteredCars(carsData);
-    setIsFilterModalVisible(false); // Close filter modal
-  };
+  const clearFilters = useCallback(() => {
+    setSelectedTypes([]);
+    setSelectedRatings([]);
+    setSelectedDriveTypes([]);
+    // Not closing modal on reset
+  }, []);
 
-  useEffect(() => {
-    applyFilters();
-  }, [searchQuery, selectedType, selectedRating, selectedDriveType]);
+  const handleModalBackgroundPress = useCallback((e: any) => {
+    // Prevent closing when clicking inside the modal content
+    if (e.target === e.currentTarget) {
+      // Do nothing when clicking outside
+    }
+  }, []);
 
   return (
     <View style={styles.container}>
-      {/* Search Input with Filter Icon */}
       <View style={styles.searchContainer}>
         <TextInput
           placeholder="Search by driver name..."
           value={searchQuery}
-          onChangeText={(text) => setSearchQuery(text)}
+          onChangeText={setSearchQuery}
           style={styles.searchInput}
         />
         <IconButton
@@ -61,24 +99,12 @@ const CarListScreen = () => {
         />
       </View>
 
-      {/* Car List */}
       <FlatList
         data={filteredCars}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('CarDetails', {
-                photos: item.photos,
-                driverName: item.driverName,
-                carType: item.carType,
-                rating: item.rating,
-                availability: item.availability,
-                distance: item.distance,
-                contact: item.contact,
-                costPerDay: item.costPerDay,
-              })
-            }
+            onPress={() => navigation.navigate('CarDetails', item)}
           >
             <Card style={styles.card}>
               <Card.Cover source={{ uri: item.photo }} style={styles.photo} />
@@ -87,26 +113,84 @@ const CarListScreen = () => {
                 <Text>Car Type: {item.carType}</Text>
                 <Text>Rating: {item.rating}⭐</Text>
                 <Text>Availability: {item.availability}</Text>
-                <Text>Distance: {item.distance}</Text>
               </Card.Content>
             </Card>
           </TouchableOpacity>
         )}
       />
 
-      {/* Filter Modal */}
-      <FilterPopup
+      <Modal
+        transparent
         visible={isFilterModalVisible}
-        onClose={() => setIsFilterModalVisible(false)}
-        selectedType={selectedType}
-        setSelectedType={setSelectedType}
-        selectedRating={selectedRating}
-        setSelectedRating={setSelectedRating}
-        selectedDriveType={selectedDriveType}
-        setSelectedDriveType={setSelectedDriveType}
-        onApply={applyFilters}
-        onClear={clearFilters}
-      />
+        animationType="fade"
+      >
+        <View style={styles.modalBackground} onTouchEnd={handleModalBackgroundPress}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.filterTitle}>Filter Options</Text>
+              <IconButton
+                icon="close"
+                size={20}
+                onPress={() => setIsFilterModalVisible(false)}
+                style={styles.closeButton}
+              />
+            </View>
+
+            <Text style={styles.filterLabel}>Car Type:</Text>
+            <View style={styles.filterRow}>
+              {['SUV', 'Sedan', 'Compact', 'Luxury'].map((type) => (
+                <CustomCheckbox
+                  key={type}
+                  label={type}
+                  isChecked={selectedTypes.includes(type)}
+                  onPress={() => toggleFilter(setSelectedTypes, type)}
+                />
+              ))}
+            </View>
+
+            <Text style={styles.filterLabel}>Minimum Rating:</Text>
+            <View style={styles.filterRow}>
+              {['4.0', '4.5'].map((rating) => (
+                <CustomCheckbox
+                  key={rating}
+                  label={`${rating}+`}
+                  isChecked={selectedRatings.includes(rating)}
+                  onPress={() => toggleFilter(setSelectedRatings, rating)}
+                />
+              ))}
+            </View>
+
+            <Text style={styles.filterLabel}>Drive Type:</Text>
+            <View style={styles.filterRow}>
+              {['Self', 'With Driver'].map((driveType) => (
+                <CustomCheckbox
+                  key={driveType}
+                  label={driveType}
+                  isChecked={selectedDriveTypes.includes(driveType)}
+                  onPress={() => toggleFilter(setSelectedDriveTypes, driveType)}
+                />
+              ))}
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <Button 
+                mode="outlined" 
+                onPress={clearFilters} 
+                style={styles.clearButton}
+              >
+                Reset
+              </Button>
+              <Button 
+                mode="contained" 
+                onPress={applyFilters} 
+                style={styles.filterButton}
+              >
+                Apply Filters
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -128,19 +212,107 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderWidth: 1,
     paddingLeft: 10,
+    borderRadius: 5,
   },
   filterIcon: {
     marginLeft: 10,
   },
   card: {
     marginBottom: 15,
+    elevation: 3,
+    borderRadius: 8,
   },
   photo: {
     height: 150,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
   },
   driverName: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginVertical: 5,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  filterTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    flex: 1,
+    textAlign: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    right: -10,
+    top: -10,
+  },
+  filterLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 15,
+    marginBottom: 8,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15,
+    marginBottom: 8,
+    minWidth: '40%',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 2,
+    borderColor: '#2196F3',
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checked: {
+    backgroundColor: '#2196F3',
+  },
+  checkmarkText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 14,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  filterButton: {
+    flex: 1,
+    marginLeft: 5,
+  },
+  clearButton: {
+    flex: 1,
+    marginRight: 5,
   },
 });
 

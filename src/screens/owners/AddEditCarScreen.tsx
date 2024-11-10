@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Alert, Image } from 'react-native';
-import { TextInput, Button, Text, RadioButton, IconButton } from 'react-native-paper';
+import { TextInput, Button, Text, RadioButton } from 'react-native-paper';
 import { Formik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { launchImageLibrary } from 'react-native-image-picker';
@@ -44,6 +44,21 @@ const AddEditCarScreen = () => {
   const isEditMode = route.params?.isEditMode || false;
   const existingCarData = route.params?.carData;
 
+  // Determine the initial value of availability based on the existence of driverName or driverNumber
+  const initialAvailability = existingCarData?.driverName || existingCarData?.driverNumber ? 
+    (existingCarData?.availability === 'Both' ? 'Both' : 'With Driver') : 'Car Only';
+
+  const initialValues = existingCarData || {
+    brand: '',
+    model: '',
+    year: '',
+    licensePlate: '',
+    photos: [],
+    availability: initialAvailability, // Set initial availability based on the presence of driver details
+    driverName: existingCarData?.driverName || '',
+    driverNumber: existingCarData?.driverNumber || '',
+  };
+
   const handleCarPhotoUpload = async (
     setFieldValue: FormikHelpers<CarDetails>['setFieldValue'],
     photos: string[]
@@ -60,15 +75,6 @@ const AddEditCarScreen = () => {
     }
   };
 
-  const initialValues = existingCarData || {
-    brand: '',
-    model: '',
-    year: '',
-    licensePlate: '',
-    photos: [],
-    availability: 'Car Only',
-  };
-
   const handleSubmit = (values: CarDetails) => {
     navigation.navigate('Profile', {
       carData: values,
@@ -83,10 +89,6 @@ const AddEditCarScreen = () => {
           <Text style={styles.title}>Car Details</Text>
 
           <View style={styles.carContainer}>
-            <View style={styles.carHeader}>
-              <Text style={styles.carTitle}>Car Details</Text>
-            </View>
-
             <TextInput
               label="Car Brand"
               value={values.brand}
@@ -130,7 +132,7 @@ const AddEditCarScreen = () => {
               Upload Car Photos (Max 6)
             </Button>
             <View style={styles.photosContainer}>
-              {values.photos?.map((uri, photoIndex) => (
+              {values.photos.map((uri, photoIndex) => (
                 <Image key={photoIndex} source={{ uri }} style={styles.photo} />
               ))}
             </View>
@@ -157,6 +159,7 @@ const AddEditCarScreen = () => {
               </View>
             </RadioButton.Group>
 
+            {/* Conditional Driver Details */}
             {(values.availability === 'With Driver' || values.availability === 'Both') && (
               <>
                 <TextInput
@@ -181,7 +184,7 @@ const AddEditCarScreen = () => {
           </View>
 
           <Button mode="contained" onPress={handleSubmit} style={styles.button}>
-            Submit
+            {isEditMode ? 'Update Car' : 'Add Car'}
           </Button>
         </ScrollView>
       )}
@@ -213,15 +216,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 10,
-  },
-  carHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  carTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 10,
   },
   photosContainer: {
     flexDirection: 'row',
