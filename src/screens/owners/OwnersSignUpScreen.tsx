@@ -23,7 +23,7 @@ const SignUpSchema = Yup.object().shape({
   location: Yup.string().required('Location is required'),
 });
 
-const SignUpScreen = () => {
+const OwnerSignUpScreen = () => {
   const navigation = useNavigation();
 
   const handleSignUp = (values: any) => {
@@ -168,4 +168,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SignUpScreen;
+export default OwnerSignUpScreen;

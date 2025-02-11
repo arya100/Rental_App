@@ -18,7 +18,7 @@ interface Car {
 
 type ProfileScreenRouteProp = RouteProp<RootStackParamList, 'Profile'>;
 
-const ProfileScreen = () => {
+const OwnedCarsScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<ProfileScreenRouteProp>();
 
@@ -198,4 +198,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default OwnedCarsScreen;
