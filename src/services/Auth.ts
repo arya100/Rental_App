@@ -1,12 +1,10 @@
-import axios from 'axios';
+// src/services/authService.ts
 
-const BASE_URL = 'https://6dd0dafa677b4b27ba91719017a6ffd9.api.mockbin.io';
-axios.defaults.baseURL = BASE_URL;
-axios.defaults.headers.common['Content-Type'] = 'application/json';
+import apiClient from './apiClient'; // Import your Axios instance
 
 export const loginDriver = async (email: string, password: string) => {
   try {
-    const response = await axios.post(`/auth/login`, { email, password });
+    const response = await apiClient.post('/auth/login', { email, password }); // Using apiClient
     return response.data;
   } catch (error) {
     console.error('Error logging in:', error);
@@ -15,9 +13,9 @@ export const loginDriver = async (email: string, password: string) => {
 };
 
 // User sign-up (for Sign Up screen)
-export const signUpDriver  = async (userData: { name: string; email: string; password: string; phone: string }) => {
+export const signUpDriver = async (userData: { name: string; email: string; password: string; phone: string }) => {
   try {
-    const response = await axios.post(`/auth/signup`, userData);
+    const response = await apiClient.post('/auth/signup', userData); // Using apiClient
     return response.data;
   } catch (error) {
     console.error('Error signing up:', error);

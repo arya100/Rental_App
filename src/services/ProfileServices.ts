@@ -1,16 +1,10 @@
 // src/services/profileService.ts
 
-import axios from 'axios';
-
-const BASE_URL = 'https://6dd0dafa677b4b27ba91719017a6ffd9.api.mockbin.io/';
-const DRIVER_ID = '123'; // Example driver ID, replace with dynamic if needed
-
-axios.defaults.baseURL = BASE_URL;
-axios.defaults.headers.common['Content-Type'] = 'application/json';
+import apiClient from './apiClient'; // Import your Axios instance
 
 export const getProfile = async (driverId: string) => {
   try {
-    const response = await axios.get(BASE_URL);
+    const response = await apiClient.get(`/drivers/${driverId}`); // Using apiClient
     return response.data;
   } catch (error) {
     console.error('Error fetching profile data:', error);
@@ -20,7 +14,7 @@ export const getProfile = async (driverId: string) => {
 
 export const deleteCar = async (driverId: string, carId: string) => {
   try {
-    const response = await axios.delete(`/driver/${driverId}/car/${carId}`);
+    const response = await apiClient.delete(`/driver/${driverId}/car/${carId}`); // Using apiClient
     return response.data;
   } catch (error) {
     console.error('Error deleting car:', error);
@@ -30,7 +24,7 @@ export const deleteCar = async (driverId: string, carId: string) => {
 
 export const addCar = async (driverId: string, carData: any) => {
   try {
-    const response = await axios.post(`/driver/${driverId}/car`, carData);
+    const response = await apiClient.post(`/driver/${driverId}/car`, carData); // Using apiClient
     return response.data;
   } catch (error) {
     console.error('Error adding car:', error);
@@ -40,7 +34,7 @@ export const addCar = async (driverId: string, carData: any) => {
 
 export const editCar = async (driverId: string, carId: string, carData: any) => {
   try {
-    const response = await axios.put(`/driver/${driverId}/car/${carId}`, carData);
+    const response = await apiClient.put(`/driver/${driverId}/car/${carId}`, carData); // Using apiClient
     return response.data;
   } catch (error) {
     console.error('Error updating car:', error);

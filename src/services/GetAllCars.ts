@@ -1,10 +1,6 @@
 // src/services/apiService.ts
 
-import axios from 'axios';
-
-const BASE_URL = 'https://6dd0dafa677b4b27ba91719017a6ffd9.api.mockbin.io';
-axios.defaults.baseURL = BASE_URL;
-axios.defaults.headers.common['Content-Type'] = 'application/json';
+import apiClient from './apiClient'; // Import your apiClient
 
 // Fetch all cars with optional filters
 export const getCars = async (filters?: {
@@ -22,7 +18,8 @@ export const getCars = async (filters?: {
     if (filters?.distance) params.append('distance', filters.distance.toString());
 
     // Make request with query params if available
-    const response = await axios.get('/cars', { params });
+    const response = await apiClient.get('/sample/home', { params }); // Using apiClient
+    console.log(response.data);
     return response.data;
   } catch (error) {
     console.error('Error fetching cars:', error);
@@ -32,11 +29,11 @@ export const getCars = async (filters?: {
 
 // Fetch specific car details
 export const getCarDetails = async (carId: string) => {
-    try {
-      const response = await axios.get(`/cars/${carId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching car details:', error);
-      throw error;
-    }
-  };
+  try {
+    const response = await apiClient.get(`/api/cars/${carId}`); // Correct the URL to include carId
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching car details:', error);
+    throw error;
+  }
+};

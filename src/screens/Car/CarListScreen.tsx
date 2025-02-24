@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Card, Button, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import carsData from '../mocks/cars';
+import { getCars } from '../../services/GetAllCars';
 
 // Custom Checkbox Component with Tick Mark
 const CustomCheckbox = ({ 
@@ -42,8 +42,21 @@ const CarListScreen = () => {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedRatings, setSelectedRatings] = useState<string[]>([]);
   const [selectedDriveTypes, setSelectedDriveTypes] = useState<string[]>([]);
-  const [filteredCars, setFilteredCars] = useState(carsData);
+  const [filteredCars, setFilteredCars] = useState();
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+
+  // Fetch cars from API on component mount
+  useEffect(() => {
+    const fetchCars = async () => {
+      try {
+        const data = await getCars(); // Calls the API
+        setFilteredCars(data); // Initially show all cars
+      } catch (error) {
+        console.error('Failed to fetch cars:', error);
+      }
+    };
+    fetchCars();
+  }, []);
 
   const navigation = useNavigation();
 
@@ -54,7 +67,7 @@ const CarListScreen = () => {
   }, []);
 
   const applyFilters = useCallback(() => {
-    const filteredData = carsData.filter((car) => {
+    const filteredData = getCars.filter((car) => {
       const matchesType = selectedTypes.length === 0 || selectedTypes.includes(car.carType);
       const matchesRating = selectedRatings.length === 0 ||
         selectedRatings.some((rating) => car.rating >= parseFloat(rating));
